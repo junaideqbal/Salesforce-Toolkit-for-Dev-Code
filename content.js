@@ -61,40 +61,55 @@ function buildSummaryUI(h2s) {
 // === Create field group for one table ===
 function createFieldGroup(h2) {
 	const sectionTitle = h2.textContent.trim();
-	const table =
-		h2.nextElementSibling?.tagName === "TABLE"
-			? h2.nextElementSibling
-			: h2.nextElementSibling?.querySelector("table");
-	if (!table) return null;
-	const rows = table.querySelectorAll("tbody tr");
-	const fieldMap = new Map();
+	const tables = [];
 
-	rows.forEach((row) => {
-		const fieldTd = row.querySelector(
-			'td[data-title="Field"], td[data-title="Field Name"]'
-		);
-		const descTd = row.querySelector(
-			'td[data-title="Description"], td[data-title="Details"]'
-		);
-		const typeTd = row.querySelector(
-			'td[data-title="Type"], td[data-title="Field Type"]'
-		);
+    // ✅ Look inside the current section (in case table is right below <h2>)
+    const currentSectionTables = h2.parentElement.querySelectorAll("table.featureTable");
+    if (currentSectionTables?.length) tables.push(...currentSectionTables);
 
-		const fieldName = fieldTd?.textContent.trim();
-		if (!fieldName) return;
+    // 🔁 Then continue with next siblings until next <h2>
+    let next = h2.parentElement.nextElementSibling;
+    while (next) {
+        if (next.querySelector?.("h2.helpHead2")) break; // stop at next section
 
-		let description = descTd ? descTd.textContent : "";
-		let type = typeTd ? typeTd.textContent.trim() : "";
+        const foundTables = next.querySelectorAll?.("table.featureTable");
+        if (foundTables?.length) tables.push(...foundTables);
 
-		description = cleanText(description);
+        next = next.nextElementSibling;
+    }
+    const fieldMap = new Map();
 
-		let tooltip = "";
-		if (type) tooltip += `Type:\n${type}\n\n`;
-		if (description) tooltip += `Description:\n${description}`;
-		tooltip = tooltip.trim() || "No additional info available.";
+	if (!tables.length) return null;
+    tables.forEach(table => {
+        const rows = table.querySelectorAll("tbody tr");
 
-		fieldMap.set(fieldName, tooltip);
-	});
+        rows.forEach((row) => {
+            const fieldTd = row.querySelector(
+                'td[data-title="Field"], td[data-title="Field Name"]'
+            );
+            const descTd = row.querySelector(
+                'td[data-title="Description"], td[data-title="Details"]'
+            );
+            const typeTd = row.querySelector(
+                'td[data-title="Type"], td[data-title="Field Type"]'
+            );
+
+            const fieldName = fieldTd?.textContent.trim();
+            if (!fieldName) return;
+
+            let description = descTd ? descTd.textContent : "";
+            let type = typeTd ? typeTd.textContent.trim() : "";
+
+            description = cleanText(description);
+
+            let tooltip = "";
+            if (type) tooltip += `Type:\n${type}\n\n`;
+            if (description) tooltip += `Description:\n${description}`;
+            tooltip = tooltip.trim() || "No additional info available.";
+
+            fieldMap.set(fieldName, tooltip);
+        });
+    });
 
 	if (!fieldMap.size) return null;
 
