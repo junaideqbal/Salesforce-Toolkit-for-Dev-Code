@@ -181,6 +181,43 @@ function createFieldGroup(h2) {
 			navigator.clipboard.writeText(formatted).then(() => {
 				showToast(`✅ ${formatted} copied!`);
 			});
+const docXml = document.querySelector("#maincontent > doc-xml-content");
+	const docContent = docXml?.shadowRoot?.querySelector("doc-content-layout > doc-content");
+	const container = docContent?.shadowRoot?.querySelector('div.container[data-name="content"]');
+	if (!container) return;
+
+	const allRows = container.querySelectorAll("table.featureTable tr");
+
+	let matchRow = null;
+	allRows.forEach(tr => {
+		const fieldCell = tr.querySelector('td[data-title="Field"], td[data-title="Field Name"]');
+		if (fieldCell?.textContent.trim() === field) {
+			matchRow = tr;
+		}
+	});
+
+	if (!matchRow) {
+		showToast("⚠️ Field row not found");
+		return;
+	}
+
+	// 🧠 SCROLL TWICE — once now, once after layout settles
+	const scrollToRow = () => {
+		matchRow.scrollIntoView({ behavior: "smooth", block: "center" });
+		matchRow.style.transition = "background-color 0.3s";
+		matchRow.style.backgroundColor = "#ffff99";
+		setTimeout(() => (matchRow.style.backgroundColor = ""), 1500);
+	};
+
+	// First scroll after slight delay
+	setTimeout(() => {
+		scrollToRow();
+
+		// Then scroll again after forced reflow (DOM fully stabilized)
+		setTimeout(() => {
+			scrollToRow();
+		}, 300);
+	}, 100);
 		};
 
 		fieldList.appendChild(tag);
